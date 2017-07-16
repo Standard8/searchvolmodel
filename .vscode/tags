@@ -1,0 +1,66 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+FILES_TO_NOT_REMOVE	../scripts/export_mc.py	/^FILES_TO_NOT_REMOVE = [$/;"	kind:variable	line:10
+FILES_TO_SKIP_COPY	../scripts/export_mc.py	/^FILES_TO_SKIP_COPY = [$/;"	kind:variable	line:16
+Repo	../scripts/export_mc.py	/^from git import Repo$/;"	kind:namespace	line:7
+RepoHandler	../scripts/export_mc.py	/^class RepoHandler():$/;"	kind:class	line:33
+__init__	../scripts/export_mc.py	/^    def __init__(self, mcRepoPath):$/;"	kind:member	line:34
+action	../scripts/export_mc.py	/^                        action="store_true",$/;"	kind:variable	line:196
+action	../scripts/export_mc.py	/^                        action="store_true",$/;"	kind:variable	line:205
+action	../scripts/export_mc.py	/^                        action="store_true",$/;"	kind:variable	line:208
+argparse	../scripts/export_mc.py	/^import argparse$/;"	kind:namespace	line:3
+args	../scripts/export_mc.py	/^    args = parser.parse_args()$/;"	kind:variable	line:210
+binary	../scripts/install_ff.py	/^binary = mozinstall.get_binary(install_folder, 'Firefox')$/;"	kind:variable	line:10
+buildMozillaCentral	../scripts/export_mc.py	/^def buildMozillaCentral(mcRepoPath):$/;"	kind:function	line:153
+checkoutDefault	../scripts/export_mc.py	/^    def checkoutDefault(self, baseCommit):$/;"	kind:member	line:42
+copyfile	../scripts/export_mc.py	/^from shutil import copyfile$/;"	kind:namespace	line:8
+createBranch	../scripts/export_mc.py	/^    def createBranch(self, branch):$/;"	kind:member	line:51
+createCommit	../scripts/export_mc.py	/^    def createCommit(self, subDir, commitMessage):$/;"	kind:member	line:62
+default	../scripts/export_mc.py	/^                        default="browser\/extensions\/searchvolmodel\/",$/;"	kind:variable	line:191
+default	../scripts/export_mc.py	/^                        default="central",$/;"	kind:variable	line:199
+default	../scripts/export_mc.py	/^                        default=(os.getenv("EXPORT_MC_LOCATION") or "..\/gecko-dev"),$/;"	kind:variable	line:186
+description	../scripts/export_mc.py	/^        description="Search Volume Modeling script for managing export to mozilla-central")$/;"	kind:variable	line:184
+exportFilesToMC	../scripts/export_mc.py	/^def exportFilesToMC(repoDir, mcRepoLoc):$/;"	kind:function	line:80
+exportToMozillaCentral	../scripts/export_mc.py	/^def exportToMozillaCentral(repoDir, mcRepoPath, mcSubDir, mcBranch,$/;"	kind:function	line:130
+export_mc.py	../scripts/export_mc.py	1;"	kind:file	line:1
+f	../scripts/install_ff.py	/^f = open("build\/fflocation.bat", "w")$/;"	kind:variable	line:15
+f	../scripts/install_ff.py	/^f = open("build\/fflocation.txt", "w")$/;"	kind:variable	line:18
+f	../scripts/install_ff.py	/^f = open("build\/templocation.txt", "w")$/;"	kind:variable	line:21
+firefox_exe	../scripts/install_ff.py	/^firefox_exe = sys.argv[1]$/;"	kind:variable	line:7
+get_secret.py	../scripts/get_secret.py	1;"	kind:file	line:1
+help	../scripts/export_mc.py	/^                        help="A gecko directory reference to mozilla-central, can also "$/;"	kind:variable	line:188
+help	../scripts/export_mc.py	/^                        help="Don't switch to the default branch, use the existing one.")$/;"	kind:variable	line:197
+help	../scripts/export_mc.py	/^                        help="Specify to build locally after export.")$/;"	kind:variable	line:206
+help	../scripts/export_mc.py	/^                        help="The base commit if using Mercurial, defaults to 'central' (tree label)")$/;"	kind:variable	line:200
+help	../scripts/export_mc.py	/^                        help="The branch\/bookmark name to use for the export.")$/;"	kind:variable	line:194
+help	../scripts/export_mc.py	/^                        help="The commit message to use for the export.")$/;"	kind:variable	line:203
+help	../scripts/export_mc.py	/^                        help="Where the extension is located in mozilla-central.")$/;"	kind:variable	line:192
+help	../scripts/export_mc.py	/^                        help="Whether or not to run Search Volume Modeling tests after the build.")$/;"	kind:variable	line:209
+install_ff.py	../scripts/install_ff.py	1;"	kind:file	line:1
+install_folder	../scripts/install_ff.py	/^install_folder = mozinstall.install(src=firefox_exe, dest=tempdir)$/;"	kind:variable	line:9
+json	../scripts/get_secret.py	/^import json$/;"	kind:namespace	line:2
+main	../scripts/export_mc.py	/^def main(mcRepoPath, mcSubDir, mcBranch, noSwitchBranch,$/;"	kind:function	line:168
+mcSubDir	../scripts/export_mc.py	/^         mcSubDir=args.mozilla_central_subdir,$/;"	kind:variable	line:213
+metavar	../scripts/export_mc.py	/^                        metavar=(os.getenv("EXPORT_MC_LOCATION") or "..\/gecko-dev"),$/;"	kind:variable	line:187
+mozinstall	../scripts/install_ff.py	/^import mozinstall$/;"	kind:namespace	line:1
+noSwitchBranch	../scripts/export_mc.py	/^         noSwitchBranch=args.no_switch_branch,$/;"	kind:variable	line:215
+os	../scripts/export_mc.py	/^import os$/;"	kind:namespace	line:4
+os	../scripts/install_ff.py	/^import os$/;"	kind:namespace	line:2
+parser	../scripts/export_mc.py	/^    parser = argparse.ArgumentParser($/;"	kind:variable	line:183
+required	../scripts/export_mc.py	/^                        required=True,$/;"	kind:variable	line:202
+res	../scripts/get_secret.py	/^    res = urllib2.urlopen(url)$/;"	kind:variable	line:8
+runProcess	../scripts/export_mc.py	/^def runProcess(cmd, cwd, errorMessage):$/;"	kind:function	line:22
+runTests	../scripts/export_mc.py	/^         runTests=args.run_tests)$/;"	kind:variable	line:217
+runTestsInMozillaCentral	../scripts/export_mc.py	/^def runTestsInMozillaCentral(mcRepoPath, mcSubDir):$/;"	kind:function	line:160
+subprocess	../scripts/export_mc.py	/^import subprocess$/;"	kind:namespace	line:5
+sys	../scripts/export_mc.py	/^import sys$/;"	kind:namespace	line:6
+sys	../scripts/get_secret.py	/^import sys$/;"	kind:namespace	line:3
+sys	../scripts/install_ff.py	/^import sys$/;"	kind:namespace	line:3
+tempdir	../scripts/install_ff.py	/^tempdir = tempfile.mkdtemp()$/;"	kind:variable	line:6
+tempfile	../scripts/install_ff.py	/^import tempfile$/;"	kind:namespace	line:4
+url	../scripts/get_secret.py	/^url = "http:\/\/taskcluster\/secrets\/v1\/secret\/repo:github.com\/mozilla\/example-addon-repo:pull-request"$/;"	kind:variable	line:5
+urllib2	../scripts/get_secret.py	/^import urllib2$/;"	kind:namespace	line:1
