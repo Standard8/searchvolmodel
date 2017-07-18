@@ -269,7 +269,6 @@ function onPageLoad(event) {
     return;
   }
   if (parseCookies(doc.cookie).SRCHS == "PC=MOZI") {
-    log(`${uri.host} search with code MOZI - Follow on`);
     sendRegisterSerpMsg("MOZI", "bing", uri.spec);
     gLastSearch = uri.spec;
   }
@@ -284,7 +283,6 @@ function onPageLoad(event) {
  * @param {String} url The URL of the tab to monitor.
  */
 function sendRegisterSerpMsg(code, sap, url) {
-  log(`>>>> sendRegisterSerpMsg\n`);
   sendAsyncMessage(kRegisterSerpMsg, {
     code,
     sap,
@@ -299,7 +297,6 @@ function sendRegisterSerpMsg(code, sap, url) {
  * @param {String} url The URL of the tab to stop monitoring.
  */
 function sendDeregisterSerpMsg(url) {
-  log(`>>>> sendDeregisterSerpMsg\n`);
   sendAsyncMessage(kDeregisterSerpMsg, { url });
 }
 

@@ -47,6 +47,7 @@ function handleRegisterSerpMsg(message) {
   }
 
   let info = message.data;
+  log(message.name);
   log(info);
   SerpMonitor.serpTabs.set(info.url, info);
 }
@@ -62,6 +63,7 @@ function handleDeregisterSerpMsg(message) {
   }
 
   let info = message.data;
+  log(message.name);
   log(info);
   SerpMonitor.serpTabs.delete(info.url);
 }
@@ -92,7 +94,6 @@ function deactivateTelemetry() {
     return;
   }
 
-  log(`Removing frame script!!!!!!`)
   Services.mm.removeMessageListener(kRegisterSerpMsg, handleRegisterSerpMsg);
   Services.mm.removeMessageListener(kDeregisterSerpMsg, handleDeregisterSerpMsg);
   Services.mm.removeDelayedFrameScript(frameScript);
@@ -200,6 +201,5 @@ function startup(data, reason) {
  * @param {Number} reason Indicates why the extension is being shut down.
  */
 function shutdown(data, reason) {
-  log(`Shutting down!!!!!`);
   deactivateTelemetry();
 }
