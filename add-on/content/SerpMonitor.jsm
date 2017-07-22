@@ -126,9 +126,9 @@ this.SerpMonitor = {
       }
 
       Cu.reportError(`>>>> [${[...this.serpTabs.keys()]}]\n`);
-      // triggerURI && Cu.reportError(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`)
-      // triggerURI && Cu.reportError(`>>>> triggeringPrincipal: ${triggerURI.spec}`)
-      // Cu.reportError(`>>>> channel.URI: ${uri.spec}`)
+      triggerURI && Cu.reportError(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`)
+      triggerURI && Cu.reportError(`>>>> triggeringPrincipal: ${triggerURI.spec}`)
+      Cu.reportError(`>>>> channel.URI: ${uri.spec}`)
       if (resultDomainInfo &&
         uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
                  this.serpTabs.has(triggerURI.spec)) {
@@ -137,6 +137,7 @@ this.SerpMonitor = {
 
         let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
         histogram.add(`${info.sap}.adclick:unknown:${info.code}`);
+        this.serpTabs.delete(triggerURI.spec);
       }
     } catch (e) {
       Cu.reportError(e);
