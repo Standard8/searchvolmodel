@@ -5,7 +5,7 @@ This is an experimental add-on for modeling search volume in Firefox. It will be
 # Documentation
 
 * [Building, running code and tests](docs/Developing.md)
-* [Metrics][docs/METRICS.md]
+* [Metrics](docs/METRICS.md)
 * Testing
   * [Linting](docs/Linting.md)
   * [Unit Tests](docs/UnitTests.md)
