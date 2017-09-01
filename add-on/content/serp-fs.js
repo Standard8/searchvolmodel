@@ -117,6 +117,7 @@ let searchDomains = [{
   ],
   "search": "q",
   "prefix": "client",
+  "followOnSearch": "oq",
   "codes": ["firefox-b-ab", "firefox-b"],
   "sap": "google",
 }];
