@@ -8,6 +8,8 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Log.jsm");
 Cu.importGlobalProperties(["URLSearchParams"]);
 XPCOMUtils.defineLazyModuleGetter(this, "SerpProcess",
   "chrome://searchvolmodel/content/SerpProcess.jsm");
@@ -17,14 +19,10 @@ const kRegisterSerpMsg = `${kExtensionID}:register-serp`;
 const kDeregisterSerpMsg = `${kExtensionID}:deregister-serp`;
 const kShutdownMsg = `${kExtensionID}:shutdown`;
 
-/**
- * Used for debugging to log messages.
- *
- * @param {String} message The message to log.
- */
-function log(message) {
-  console.log(message);
-}
+// Logging
+const log = Log.repository.getLogger("extensions.searchvolmodel.serp-fs");
+log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
+log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
 
 // Hack to handle the most common reload case.
 // If gLastSearch is the same as the current URL, ignore the search.
@@ -43,26 +41,26 @@ var serpProgressListener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
   onLocationChange(aWebProgress, aRequest, aLocation, aFlags)
   {
-    log(`>>>>0\n`);
+    log.trace(`>>>>0\n`);
     if (aWebProgress.DOMWindow && (aWebProgress.DOMWindow != gOriginalWindow)) {
       return;
     }
     try {
-      log(`>> aLocation.spec: ${aLocation.spec}`)
+      log.trace(`>> aLocation.spec: ${aLocation.spec}`)
       // Ignore reloads and iframe navigation.
       if (!aWebProgress.isTopLevel ||
           aLocation.spec == gLastSearch) {
-        log(`>>>>1\n`);
+        log.trace(`>>>>1\n`);
         return;
       }
-      log(`>>>>2\n`);
+      log.trace(`>>>>2\n`);
       let loadInfo;
       try {
         let channel = aRequest.QueryInterface(Ci.nsIHttpChannel);
         loadInfo = channel.loadInfo;
       } catch (e) {
         // Non-HTTP channels or channels without a loadInfo are not pertinent.
-        log(`>>>> non-HTTP channel or channel without loadInfo.\n`);
+        log.trace(`>>>> non-HTTP channel or channel without loadInfo.\n`);
         return;
       }
       let triggerURI = loadInfo.triggeringPrincipal.URI;
@@ -70,19 +68,19 @@ var serpProgressListener = {
       // Not a URL or doesn't have a query string or a ref.
       if ((!aLocation.schemeIs("http") && !aLocation.schemeIs("https")) ||
           (!aLocation.query && !aLocation.ref)) {
-        log(`>>>> not search-related page.\n`);
+        log.trace(`>>>> not search-related page.\n`);
         // not search-related page.
         sendDeregisterSerpMsg(triggerURI.spec);
         return;
       }
-      log(`>>>>3\n`);
+      log.trace(`>>>>3\n`);
 
       let domainInfo = SerpProcess.getSearchDomainCodes(aLocation.host);
       if (!domainInfo) {
         sendDeregisterSerpMsg(triggerURI.spec);
         return;
       }
-      log(`>>>>4\n`);
+      log.trace(`>>>>4\n`);
 
       let queries = new URLSearchParams(aLocation.query);
       let code = queries.get(domainInfo.prefix);
@@ -95,12 +93,12 @@ var serpProgressListener = {
           sendRegisterSerpMsg(code, domainInfo.sap, aLocation.spec);
           gLastSearch = aLocation.spec;
         } else {
-          log(`>>>> SERP without our codes.\n`);
+          log.trace(`>>>> SERP without our codes.\n`);
           // SERP without our codes.
           sendDeregisterSerpMsg(triggerURI.spec);
         }
       } else {
-        log(`>>>> SERP without our codes.\n`);
+        log.trace(`>>>> SERP without our codes.\n`);
         // SERP with non-search queries.
         sendDeregisterSerpMsg(triggerURI.spec);
       }
@@ -135,7 +133,7 @@ function parseCookies(cookieString, params = {}) {
  * @param {Object} event The page load event.
  */
 function onPageLoad(event) {
-  log(`>>>> onPageLoad\n`);
+  log.trace(`>>>> onPageLoad\n`);
   var doc = event.target;
   var win = doc.defaultView;
   if (win != win.top) {
@@ -196,7 +194,7 @@ docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebProgress
 let gDisabled = false;
 
 addMessageListener(kShutdownMsg, () => {
-  dump(">>>>>>>>> kShutdownMsg received!!!!\n");
+  log.trace(">>>>>>>>> kShutdownMsg received!!!!\n");
   if (!gDisabled) {
     removeEventListener("DOMContentLoaded", onPageLoad, false);
     docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebProgress)

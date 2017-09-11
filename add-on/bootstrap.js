@@ -8,6 +8,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
+Cu.import("resource://gre/modules/Log.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SerpMonitor",
   "chrome://searchvolmodel/content/SerpMonitor.jsm");
 
@@ -22,19 +23,13 @@ const kShutdownMsg = `${kExtensionID}:shutdown`;
 
 const frameScript = `chrome://searchvolmodel/content/serp-fs.js?q=${Math.random()}`;
 
-var gLoggingEnabled = true;
 var gTelemetryActivated = false;
 
-/**
- * Logs a message to the console if logging is enabled.
- *
- * @param {String} message The message to log.
- */
-function log(message) {
-  if (gLoggingEnabled) {
-    console.log("Search Volume Modeling", message);
-  }
-}
+// Logging
+const log = Log.repository.getLogger("extensions.searchvolmodel.bootstrap");
+log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
+// Useful log levels: All = -1, Warn = 50, Info = 40, Debug = 20, Trace = 10, see Log.jsm
+log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
 
 /**
  * Handles receiving a message from the content process to resgister a SERP.
@@ -47,8 +42,7 @@ function handleRegisterSerpMsg(message) {
   }
 
   let info = message.data;
-  log(message.name);
-  log(info);
+  log.debug(message.name, message.data);
   SerpMonitor.serpTabs.set(info.url, info);
 }
 
@@ -63,8 +57,7 @@ function handleDeregisterSerpMsg(message) {
   }
 
   let info = message.data;
-  log(message.name);
-  log(info);
+  log.debug(message.name, message.data);
   SerpMonitor.serpTabs.delete(info.url);
 }
 
@@ -130,12 +123,12 @@ var cohortManager = {
     try {
       let distId = Services.prefs.getCharPref("distribution.id", "");
       if (distId) {
-        log("It is a distribution, not setting up nor enabling telemetry.");
+        log.info("It is a distribution, not setting up nor enabling telemetry.");
         return;
       }
     } catch (e) {}
 
-    log("Enabling telemetry for user");
+    log.info("Enabling telemetry for user");
     this.enableForUser = true;
   },
 };
@@ -147,12 +140,6 @@ var cohortManager = {
  * @param {Number} reason Indicates why the extension is being installed.
  */
 function install(data, reason) {
-  try {
-    gLoggingEnabled = Services.prefs.getBoolPref(PREF_LOGGING, false);
-  } catch (e) {
-    // Needed until Firefox 54
-  }
-
   cohortManager.init();
   if (cohortManager.enableForUser) {
     activateTelemetry();
@@ -176,12 +163,6 @@ function uninstall(data, reason) {
  * @param {Number} reason Indicates why the extension is being started.
  */
 function startup(data, reason) {
-  try {
-    gLoggingEnabled = Services.prefs.getBoolPref(PREF_LOGGING, false);
-  } catch (e) {
-    // Needed until Firefox 54
-  }
-
   cohortManager.init();
 
   if (cohortManager.enableForUser) {

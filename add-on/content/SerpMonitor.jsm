@@ -6,7 +6,13 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Log.jsm");
 Cu.importGlobalProperties(["URLSearchParams"]);
+
+// Logging
+const log = Log.repository.getLogger("extensions.searchvolmodel.monitor");
+log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
+log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
 
 /**
  * A map of search engine result domains with their expected prefixes.
@@ -125,17 +131,19 @@ this.SerpMonitor = {
         return;
       }
 
-      Cu.reportError(`>>>> [${[...this.serpTabs.keys()]}]\n`);
-      triggerURI && Cu.reportError(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`)
-      triggerURI && Cu.reportError(`>>>> triggeringPrincipal: ${triggerURI.spec}`)
-      Cu.reportError(`>>>> channel.URI: ${uri.spec}`)
+      log.trace(`>>>> [${[...this.serpTabs.keys()]}]\n`);
+      if (triggerURI) {
+        log.trace(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`);
+        log.trace(`>>>> triggeringPrincipal: ${triggerURI.spec}`);
+      }
+      log.trace(`>>>> channel.URI: ${uri.spec}`);
       if (resultDomainInfo &&
         uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
                  this.serpTabs.has(triggerURI.spec)) {
         let info = this.serpTabs.get(triggerURI.spec);
-        Cu.reportError(`${resultDomainInfo.sap} ad click`); // XXX
 
         let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+        log.info(`Reporting to Telemetry: ${info.sap}.adclick:unknown:${info.code}`);
         histogram.add(`${info.sap}.adclick:unknown:${info.code}`);
         this.serpTabs.delete(triggerURI.spec);
       }
