@@ -59,9 +59,11 @@ function onExit(...args) {
   }
 }
 
+let userjsSourceDir = Path.normalize(Path.join(__dirname, "user.js"));
 let addonSourceDir = Path.normalize(Path.join(__dirname, "..", "add-on"));
 let addonInstallRDF = Path.normalize(Path.join(addonSourceDir, "install.rdf"));
 let profile = Commander.profile || DEFAULT_PROFILE;
+let userjsTargetFile;
 let extensionsDir;
 let addonTargetFile;
 let compatibilityFile;
@@ -81,6 +83,7 @@ Fs.stat(addonSourceDir).then(sourceStat => {
     extensionsDir = Path.join(profilePath, "extensions");
     addonTargetFile = Path.join(extensionsDir, "searchvolmodel@mozilla.com");
     compatibilityFile = Path.join(profilePath, "compatibility.ini");
+    userjsTargetFile = Path.join(profilePath, "user.js");
     return Mkdirp(extensionsDir);
   })
   .then(() => ensureRemoved(addonTargetFile))
@@ -88,6 +91,15 @@ Fs.stat(addonSourceDir).then(sourceStat => {
   // directory to exist.
   .then(() => Fs.open(addonTargetFile, "w+"))
   .then(file => Fs.write(file, `${addonSourceDir}/`))
+  // Insert user.js with the prefs that we need.
+  .then(() => {
+    // eslint-disable-next-line no-sync
+    let newFile = Fs.openSync(userjsTargetFile, "wx", 0o644);
+    // eslint-disable-next-line no-sync
+    let content = Fs.readFileSync(userjsSourceDir);
+    // eslint-disable-next-line no-sync
+    Fs.writeFileSync(newFile, content);
+  })
   // Hack, remove compatibility.ini to make Firefox pick up the changes.
   .then(() => Fs.unlink(compatibilityFile))
   // eslint-disable-next-line no-sync
@@ -102,6 +114,10 @@ Fs.stat(addonSourceDir).then(sourceStat => {
     .then(() => {
       console.log("Removing proxy");
       return Fs.unlink(addonTargetFile);
+    })
+    .then(() => {
+      console.log("Removing user.js");
+      return Fs.unlink(userjsTargetFile)
     });
   })
 .catch(onExit);
