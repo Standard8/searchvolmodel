@@ -4,32 +4,54 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Log.jsm");
-Cu.importGlobalProperties(["URLSearchParams"]);
-
-// Logging
-const log = Log.repository.getLogger("extensions.searchvolmodel.monitor");
-log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
-log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
+const EXPORTED_SYMBOLS = ["SerpProcess"];
 
 /**
- * A map of search engine result domains with their expected prefixes.
+ * A map of search domains with their expected codes.
  */
-let searchResultDomains = [{
-  "domains": [ "r.search.yahoo.com" ],
-  "prefix": "cbclk2",
+let searchDomains = [{
+  "domains": [ "search.yahoo.co.jp" ],
+  "search": "p",
+  "followOnSearch": "ai",
+  "prefix": "fr",
+  "codes": ["mozff"],
   "sap": "yahoo",
 }, {
-  "domains": [ "0.r.bat.bing.com" ],
-  "prefix": "",
+  "domains": [ "www.bing.com" ],
+  "search": "q",
+  "prefix": "pc",
+  "reportPrefix": "form",
+  "codes": ["MOZI"],
   "sap": "bing",
 }, {
-  "domains": [ "www.googleadservices.com" ],
-  "prefix": "pagead/aclk",
-  "sap": "google",
+  // The Yahoo domains to watch for.
+  "domains": [
+    "search.yahoo.com", "ca.search.yahoo.com", "hk.search.yahoo.com",
+    "tw.search.yahoo.com"
+  ],
+  "search": "p",
+  "followOnSearch": "fr2",
+  "prefix": "hspart",
+  "reportPrefix": "hsimp",
+  "codes": ["mozilla"],
+  "sap": "yahoo",
 }, {
+  // The Yahoo legacy domains.
+  "domains": [
+    "no.search.yahoo.com", "ar.search.yahoo.com", "br.search.yahoo.com",
+    "ch.search.yahoo.com", "cl.search.yahoo.com", "de.search.yahoo.com",
+    "uk.search.yahoo.com", "es.search.yahoo.com", "espanol.search.yahoo.com",
+    "fi.search.yahoo.com", "fr.search.yahoo.com", "nl.search.yahoo.com",
+    "id.search.yahoo.com", "in.search.yahoo.com", "it.search.yahoo.com",
+    "mx.search.yahoo.com", "se.search.yahoo.com", "sg.search.yahoo.com",
+  ],
+  "search": "p",
+  "followOnSearch": "fr2",
+  "prefix": "fr",
+  "codes": ["moz35"],
+  "sap": "yahoo",
+}, {
+  // The Google domains.
   "domains": [
     "www.google.com", "www.google.ac", "www.google.ad", "www.google.ae",
     "www.google.com.af", "www.google.com.ag", "www.google.com.ai",
@@ -84,73 +106,20 @@ let searchResultDomains = [{
     "www.google.com.vn", "www.google.vu", "www.google.ws", "www.google.co.za",
     "www.google.co.zm", "www.google.co.zw",
   ],
-  "prefix": "aclk",
+  "search": "q",
+  "prefix": "client",
+  "followOnSearch": "oq",
+  "codes": ["firefox-b-ab", "firefox-b"],
   "sap": "google",
 }];
 
-/**
- * nsIHttpActivityObserver that counts ad clicks.
- */
-this.SerpMonitor = {
-  // A map of tab URLs being monitored to search domain information. These are
-  // tabs where the last visited page was a SERP.
-  serpTabs: new Map(),
-
-  searchResultDomains,
-
-  getSearchResultDomainCodes(host) {
-    for (let domainInfo of this.searchResultDomains) {
+this.SerpProcess = {
+  getSearchDomainCodes(host) {
+    for (let domainInfo of searchDomains) {
       if (domainInfo.domains.includes(host)) {
         return domainInfo;
       }
     }
     return null;
-  },
-
-  observeActivity(aHttpChannel, aActivityType, aActivitySubtype, aTimestamp, aExtraSizeData, aExtraStringData) {
-    if (aActivityType != Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION &&
-        aActivitySubtype != Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE) {
-      return;
-    }
-
-    let channel = aHttpChannel.QueryInterface(Ci.nsIHttpChannel);
-    let loadInfo;
-    try {
-      loadInfo = channel.loadInfo;
-    } catch (e) {
-      // Channels without a loadInfo are not pertinent.
-      return;
-    }
-
-    try {
-      let uri = channel.URI;
-      let triggerURI = loadInfo.triggeringPrincipal.URI;
-
-      let resultDomainInfo = this.getSearchResultDomainCodes(uri.host);
-      if (!resultDomainInfo) {
-        return;
-      }
-
-      log.trace(`>>>> [${[...this.serpTabs.keys()]}]\n`);
-      if (triggerURI) {
-        log.trace(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`);
-        log.trace(`>>>> triggeringPrincipal: ${triggerURI.spec}`);
-      }
-      log.trace(`>>>> channel.URI: ${uri.spec}`);
-      if (resultDomainInfo &&
-        uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
-                 this.serpTabs.has(triggerURI.spec)) {
-        let info = this.serpTabs.get(triggerURI.spec);
-
-        let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
-        log.info(`Reporting to Telemetry: ${info.sap}.adclick:unknown:${info.code}`);
-        histogram.add(`${info.sap}.adclick:unknown:${info.code}`);
-        this.serpTabs.delete(triggerURI.spec);
-      }
-    } catch (e) {
-      Cu.reportError(e);
-    }
   }
 }
-
-this.EXPORTED_SYMBOLS = ["SerpMonitor"];
