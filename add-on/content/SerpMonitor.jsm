@@ -130,10 +130,22 @@ this.SerpMonitor = {
     return null;
   },
 
+  reportAdClick(uri) {
+    let item = this._serpTabs.get(uri);
+    if (!item) {
+      log.error("Expected to report URI but couldn't find the information.");
+      return;
+    }
+
+    let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+    log.info(`Reporting to Telemetry: ${item.info.sap}.adclick:unknown:${item.info.code}`);
+    histogram.add(`${item.info.sap}.adclick:unknown:${item.info.code}`);
+  },
+
   observeActivity(aHttpChannel, aActivityType, aActivitySubtype, aTimestamp, aExtraSizeData, aExtraStringData) {
     if (!this._serpTabs.size ||
-        (aActivityType != Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION &&
-         aActivitySubtype != Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE)) {
+        aActivityType != Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION ||
+        aActivitySubtype != Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE) {
       return;
     }
 
@@ -162,14 +174,9 @@ this.SerpMonitor = {
       }
       log.info(`>>>> channel.URI: ${uri.spec}`);
       if (resultDomainInfo &&
-        uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
-                 this._serpTabs.has(triggerURI.spec)) {
-        let info = this._serpTabs.get(triggerURI.spec).info;
-
-        let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
-        log.info(`Reporting to Telemetry: ${info.sap}.adclick:unknown:${info.code}`);
-        histogram.add(`${info.sap}.adclick:unknown:${info.code}`);
-        this._serpTabs.delete(triggerURI.spec);
+          uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
+          this._serpTabs.has(triggerURI.spec)) {
+        this.reportAdClick(triggerURI.spec);
       }
     } catch (e) {
       Cu.reportError(e);

@@ -98,6 +98,8 @@ var serpProgressListener = {
             code = queries.get(domainInfo.reportPrefix);
           }
           if (aLocation.spec != gLastSearch) {
+            // This is a new SERP, but is different from the old one,
+            // so we should deregister the old one before registering the new.
             deregisterSerp();
           }
           sendRegisterSerpMsg(code, domainInfo.sap, aLocation.spec);
