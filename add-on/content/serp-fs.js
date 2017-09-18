@@ -24,6 +24,8 @@ const log = Log.repository.getLogger("extensions.searchvolmodel.serp-fs");
 log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
 log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
 
+let gContentFrameMessageManager = this;
+
 // Hack to handle the most common reload case.
 // If gLastSearch is the same as the current URL, ignore the search.
 // This also prevents us from handling reloads with hashes twice
@@ -32,6 +34,13 @@ let gLastSearch = null;
 // Keep track of the original window we were loaded in
 // so we don't handle requests for other windows.
 let gOriginalWindow = null;
+
+function deregisterSerp() {
+  if (gLastSearch) {
+    sendDeregisterSerpMsg(gLastSearch);
+    gLastSearch = null;
+  }
+}
 
 /**
  * Since most codes are in the URL, we can handle them via
@@ -54,30 +63,28 @@ var serpProgressListener = {
         return;
       }
       log.trace(`>>>>2\n`);
-      let loadInfo;
       try {
-        let channel = aRequest.QueryInterface(Ci.nsIHttpChannel);
-        loadInfo = channel.loadInfo;
+        // For effects.
+        // eslint-disable-next-line no-unused-expressions
+        aRequest.QueryInterface(Ci.nsIHttpChannel).loadInfo;
       } catch (e) {
         // Non-HTTP channels or channels without a loadInfo are not pertinent.
         log.trace(`>>>> non-HTTP channel or channel without loadInfo.\n`);
         return;
       }
-      let triggerURI = loadInfo.triggeringPrincipal.URI;
-
       // Not a URL or doesn't have a query string or a ref.
       if ((!aLocation.schemeIs("http") && !aLocation.schemeIs("https")) ||
           (!aLocation.query && !aLocation.ref)) {
         log.trace(`>>>> not search-related page.\n`);
         // not search-related page.
-        sendDeregisterSerpMsg(triggerURI.spec);
+        deregisterSerp();
         return;
       }
       log.trace(`>>>>3\n`);
 
       let domainInfo = SerpProcess.getSearchDomainCodes(aLocation.host);
       if (!domainInfo) {
-        sendDeregisterSerpMsg(triggerURI.spec);
+        deregisterSerp();
         return;
       }
       log.trace(`>>>>4\n`);
@@ -90,17 +97,20 @@ var serpProgressListener = {
               queries.get(domainInfo.reportPrefix)) {
             code = queries.get(domainInfo.reportPrefix);
           }
+          if (aLocation.spec != gLastSearch) {
+            deregisterSerp();
+          }
           sendRegisterSerpMsg(code, domainInfo.sap, aLocation.spec);
           gLastSearch = aLocation.spec;
         } else {
           log.trace(`>>>> SERP without our codes.\n`);
           // SERP without our codes.
-          sendDeregisterSerpMsg(triggerURI.spec);
+          deregisterSerp();
         }
       } else {
         log.trace(`>>>> SERP without our codes.\n`);
         // SERP with non-search queries.
-        sendDeregisterSerpMsg(triggerURI.spec);
+        deregisterSerp();
       }
     } catch (e) {
       console.error(e);
@@ -191,12 +201,23 @@ addEventListener("DOMContentLoaded", onPageLoad, false);
 docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebProgress)
         .addProgressListener(serpProgressListener, Ci.nsIWebProgress.NOTIFY_LOCATION);
 
+// The unload listener allows us to deregister this tab if it is currently
+// open with a serp.
+function unloadListener(aEvent) {
+  if (aEvent.target == gContentFrameMessageManager) {
+    deregisterSerp();
+  }
+}
+
+addEventListener("unload", unloadListener, false);
+
 let gDisabled = false;
 
 addMessageListener(kShutdownMsg, () => {
   log.trace(">>>>>>>>> kShutdownMsg received!!!!\n");
   if (!gDisabled) {
     removeEventListener("DOMContentLoaded", onPageLoad, false);
+    removeEventListener("unload", unloadListener);
     docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebProgress)
             .removeProgressListener(serpProgressListener);
     gDisabled = true;
