@@ -94,7 +94,30 @@ let searchResultDomains = [{
 this.SerpMonitor = {
   // A map of tab URLs being monitored to search domain information. These are
   // tabs where the last visited page was a SERP.
-  serpTabs: new Map(),
+  _serpTabs: new Map(),
+
+  addSerpTab(url, browser, info) {
+    let item = this._serpTabs.get(url);
+    if (item) {
+      item.browsers.push(browser);
+    } else {
+      this._serpTabs.set(url, {info, browsers: [browser]});
+    }
+  },
+
+  removeSerpTab(url, browser) {
+    let item = this._serpTabs.get(url);
+    if (item) {
+      let index = item.browsers.indexOf(browser);
+      if (index != -1) {
+        item.browsers.splice(index, 1);
+      }
+
+      if (!item.browsers.length) {
+        this._serpTabs.delete(url);
+      }
+    }
+  },
 
   searchResultDomains,
 
@@ -107,8 +130,21 @@ this.SerpMonitor = {
     return null;
   },
 
+  reportAdClick(uri) {
+    let item = this._serpTabs.get(uri);
+    if (!item) {
+      log.error("Expected to report URI but couldn't find the information.");
+      return;
+    }
+
+    let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+    log.info(`Reporting to Telemetry: ${item.info.sap}.adclick:unknown:${item.info.code}`);
+    histogram.add(`${item.info.sap}.adclick:unknown:${item.info.code}`);
+  },
+
   observeActivity(aHttpChannel, aActivityType, aActivitySubtype, aTimestamp, aExtraSizeData, aExtraStringData) {
-    if (aActivityType != Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION &&
+    if (!this._serpTabs.size ||
+        aActivityType != Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION ||
         aActivitySubtype != Ci.nsIHttpActivityObserver.ACTIVITY_SUBTYPE_TRANSACTION_CLOSE) {
       return;
     }
@@ -131,21 +167,16 @@ this.SerpMonitor = {
         return;
       }
 
-      log.trace(`>>>> [${[...this.serpTabs.keys()]}]\n`);
+      log.trace(`>>>> [${[...this._serpTabs.keys()]}]\n`);
       if (triggerURI) {
-        log.trace(`>>>> triggeringPrincipal in map: ${this.serpTabs.has(triggerURI.spec)}`);
+        log.trace(`>>>> triggeringPrincipal in map: ${this._serpTabs.has(triggerURI.spec)}`);
         log.trace(`>>>> triggeringPrincipal: ${triggerURI.spec}`);
       }
-      log.trace(`>>>> channel.URI: ${uri.spec}`);
+      log.info(`>>>> channel.URI: ${uri.spec}`);
       if (resultDomainInfo &&
-        uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
-                 this.serpTabs.has(triggerURI.spec)) {
-        let info = this.serpTabs.get(triggerURI.spec);
-
-        let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
-        log.info(`Reporting to Telemetry: ${info.sap}.adclick:unknown:${info.code}`);
-        histogram.add(`${info.sap}.adclick:unknown:${info.code}`);
-        this.serpTabs.delete(triggerURI.spec);
+          uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
+          this._serpTabs.has(triggerURI.spec)) {
+        this.reportAdClick(triggerURI.spec);
       }
     } catch (e) {
       Cu.reportError(e);

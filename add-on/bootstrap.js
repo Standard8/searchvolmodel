@@ -43,7 +43,7 @@ function handleRegisterSerpMsg(message) {
 
   let info = message.data;
   log.debug(message.name, message.data);
-  SerpMonitor.serpTabs.set(info.url, info);
+  SerpMonitor.addSerpTab(info.url, message.target, info);
 }
 
 /**
@@ -58,7 +58,7 @@ function handleDeregisterSerpMsg(message) {
 
   let info = message.data;
   log.debug(message.name, message.data);
-  SerpMonitor.serpTabs.delete(info.url);
+  SerpMonitor.removeSerpTab(info.url, message.target);
 }
 
 /**
@@ -72,7 +72,7 @@ function activateTelemetry() {
   gTelemetryActivated = true;
 
   Services.mm.addMessageListener(kRegisterSerpMsg, handleRegisterSerpMsg);
-  Services.mm.addMessageListener(kDeregisterSerpMsg, handleDeregisterSerpMsg);
+  Services.mm.addMessageListener(kDeregisterSerpMsg, handleDeregisterSerpMsg, true);
   Services.mm.loadFrameScript(frameScript, true);
   Cc["@mozilla.org/network/http-activity-distributor;1"]
     .getService(Ci.nsIHttpActivityDistributor)
