@@ -172,7 +172,7 @@ this.SerpMonitor = {
         log.trace(`>>>> triggeringPrincipal in map: ${this._serpTabs.has(triggerURI.spec)}`);
         log.trace(`>>>> triggeringPrincipal: ${triggerURI.spec}`);
       }
-      log.info(`>>>> channel.URI: ${uri.spec}`);
+      log.trace(`>>>> channel.URI: ${uri.spec}`);
       if (resultDomainInfo &&
           uri.filePath.substring(1).startsWith(resultDomainInfo.prefix) &&
           this._serpTabs.has(triggerURI.spec)) {
