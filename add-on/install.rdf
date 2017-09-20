@@ -7,7 +7,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>searchvolmodel@mozilla.com</em:id>
     <em:name>Search Volume Modeling</em:name>
-    <em:version>0.0.1</em:version>
+    <em:version>0.0.2</em:version>
     <em:type>2</em:type>
     <em:bootstrap>true</em:bootstrap>
     <em:multiprocessCompatible>true</em:multiprocessCompatible>
