@@ -17,6 +17,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "SerpMonitor",
 // Preferences this add-on uses.
 const kPrefPrefix = "extensions.searchvolmodel.";
 const PREF_LOGGING = `${kPrefPrefix}logging`;
+const PREF_GUID = `${kPrefPrefix}guid`;
 
 const kExtensionID = "searchvolmodel@mozilla.com";
 const kRegisterSerpMsg = `${kExtensionID}:register-serp`;
@@ -135,6 +136,20 @@ var cohortManager = {
   },
 };
 
+function ensureGuid() {
+  let guid = Services.prefs.getStringPref(PREF_GUID, "");
+  if (guid !== "") {
+    return guid;
+  }
+  // We assume the guid is not set, in any case, overwriting it is probably
+  // a good thing if it is set.
+  const {generateUUID} = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+  // generateUUID adds leading and trailing "{" and "}". strip them off.
+  guid = generateUUID().toString().slice(1, -1);
+  Services.prefs.setStringPref(PREF_GUID, guid);
+  return guid;
+}
+
 /**
  * Called when the add-on is installed.
  *
@@ -152,7 +167,7 @@ function install(data, reason) {
  * @param {Number} reason Indicates why the extension is being uninstalled.
  */
 function uninstall(data, reason) {
-  // Nothing specifically to do, shutdown does what we need.
+  Services.prefs.clearUserPref(PREF_GUID);
 }
 
 /**
@@ -165,6 +180,7 @@ function startup(data, reason) {
   cohortManager.init();
 
   if (cohortManager.enableForUser) {
+    SerpMonitor.init(ensureGuid());
     // Workaround for bug 1202125
     // We need to delay our loading so that when we are upgraded,
     // our new script doesn't get the shutdown message.

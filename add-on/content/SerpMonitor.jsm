@@ -6,8 +6,11 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.importGlobalProperties(["URLSearchParams"]);
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+  "resource://gre/modules/TelemetryController.jsm");
 
 // Logging
 const log = Log.repository.getLogger("extensions.searchvolmodel.monitor");
@@ -95,6 +98,22 @@ this.SerpMonitor = {
   // A map of tab URLs being monitored to search domain information. These are
   // tabs where the last visited page was a SERP.
   _serpTabs: new Map(),
+  _guid: null,
+  _distributionId: null,
+
+  get distributionId() {
+    if (!this._distributionId) {
+      this._distributionId = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).distributionId;
+      if (!this._distributionId) {
+        this._distributionId = "";
+      }
+    }
+    return this._distributionId;
+  },
+
+  init(guid) {
+    this._guid = guid;
+  },
 
   addSerpTab(url, browser, info) {
     let item = this._serpTabs.get(url);
@@ -137,9 +156,19 @@ this.SerpMonitor = {
       return;
     }
 
-    let histogram = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
-    log.info(`Reporting to Telemetry: ${item.info.sap}.adclick:unknown:${item.info.code}`);
-    histogram.add(`${item.info.sap}.adclick:unknown:${item.info.code}`);
+    let type = `searchvol`;
+    let additionalInfo = {
+      code: item.info.code,
+      distributionId: this.distributionId,
+      guid: this._guid,
+      sap: item.info.sap,
+    };
+
+    log.info(`Reporting to Telemetry: ${type} with additional info`, additionalInfo);
+    TelemetryController.submitExternalPing(type, additionalInfo, {
+      addClientId: false,
+      addEnvironment: false,
+    });
   },
 
   observeActivity(aHttpChannel, aActivityType, aActivitySubtype, aTimestamp, aExtraSizeData, aExtraStringData) {
