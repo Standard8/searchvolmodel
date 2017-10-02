@@ -31,10 +31,6 @@ let gContentFrameMessageManager = this;
 // This also prevents us from handling reloads with hashes twice
 let gLastSearch = null;
 
-// Keep track of the original window we were loaded in
-// so we don't handle requests for other windows.
-let gOriginalWindow = null;
-
 function deregisterSerp() {
   if (gLastSearch) {
     sendDeregisterSerpMsg(gLastSearch);
@@ -51,7 +47,7 @@ var serpProgressListener = {
   onLocationChange(aWebProgress, aRequest, aLocation, aFlags)
   {
     log.trace(`>>>>0\n`);
-    if (aWebProgress.DOMWindow && (aWebProgress.DOMWindow != gOriginalWindow)) {
+    if (aWebProgress.DOMWindow && (aWebProgress.DOMWindow != content)) {
       return;
     }
     try {
@@ -196,8 +192,6 @@ function sendRegisterSerpMsg(code, sap, url) {
 function sendDeregisterSerpMsg(url) {
   sendAsyncMessage(kDeregisterSerpMsg, { url });
 }
-
-gOriginalWindow = content;
 
 addEventListener("DOMContentLoaded", onPageLoad, false);
 docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebProgress)
