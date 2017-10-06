@@ -7,6 +7,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>searchvolmodel@mozilla.com</em:id>
     <em:name>Search Volume Modeling</em:name>
+    <em:creator>Mozilla Corporation</em:creator>
     <em:version>0.0.3</em:version>
     <em:type>2</em:type>
     <em:bootstrap>true</em:bootstrap>
