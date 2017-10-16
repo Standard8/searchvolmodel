@@ -11,6 +11,8 @@ Cu.import("resource://gre/modules/Log.jsm");
 Cu.importGlobalProperties(["URLSearchParams"]);
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
   "resource://gre/modules/TelemetryController.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryEnvironment",
+  "resource://gre/modules/TelemetryEnvironment.jsm");
 
 // Logging
 const log = Log.repository.getLogger("extensions.searchvolmodel.monitor");
@@ -161,13 +163,33 @@ this.SerpMonitor = {
       code: item.info.code,
       distributionId: this.distributionId,
       guid: this._guid,
-      sap: item.info.sap,
+      engine: item.info.sap,
     };
 
     log.info(`Reporting to Telemetry: ${type} with additional info`, additionalInfo);
+    let fullEnvironment = TelemetryEnvironment.currentEnvironment;
+    let defaultSearchEngine =
+      fullEnvironment.settings ? fullEnvironment.settings.defaultSearchEngine : "";
+    let defaultSearchEngineData =
+      fullEnvironment.settings ? fullEnvironment.settings.defaultSearchEngineData : {};
+    let activeExperiment =
+      fullEnvironment.addons ? fullEnvironment.addons.activeExperiment : "";
+    let experiments =
+      fullEnvironment.experiments ? fullEnvironment.experiments : {};
+
     TelemetryController.submitExternalPing(type, additionalInfo, {
       addClientId: false,
-      addEnvironment: false,
+      addEnvironment: true,
+      overrideEnvironment: {
+        settings: {
+          defaultSearchEngine,
+          defaultSearchEngineData
+        },
+        addons: {
+          activeExperiment
+        },
+        experiments
+      }
     });
   },
 
