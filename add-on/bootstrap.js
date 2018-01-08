@@ -101,41 +101,6 @@ function deactivateTelemetry() {
   gTelemetryActivated = false;
 }
 
-/**
- * cohortManager is used to decide which users to enable the add-on for.
- */
-var cohortManager = {
-  // Indicates whether the telemetry should be enabled.
-  enableForUser: false,
-
-  // Records if we've already run init.
-  _definedThisSession: false,
-
-  /**
-   * Initialises the manager, working out if telemetry should be enabled
-   * for the user.
-   */
-  init() {
-    if (this._definedThisSession) {
-      return;
-    }
-
-    this._definedThisSession = true;
-    this.enableForUser = false;
-
-    try {
-      let distId = Services.prefs.getCharPref("distribution.id", "");
-      if (distId) {
-        log.info("It is a distribution, not setting up nor enabling telemetry.");
-        return;
-      }
-    } catch (e) {}
-
-    log.info("Enabling telemetry for user");
-    this.enableForUser = true;
-  },
-};
-
 function ensureGuid() {
   let guid = Services.prefs.getStringPref(PREF_GUID, "");
   if (guid !== "") {
@@ -177,17 +142,14 @@ function uninstall(data, reason) {
  * @param {Number} reason Indicates why the extension is being started.
  */
 function startup(data, reason) {
-  cohortManager.init();
-
-  if (cohortManager.enableForUser) {
-    SerpMonitor.init(ensureGuid());
-    // Workaround for bug 1202125
-    // We need to delay our loading so that when we are upgraded,
-    // our new script doesn't get the shutdown message.
-    setTimeout(() => {
-      activateTelemetry();
-    }, 1000);
-  }
+  log.info("Enabling SearchVol telemetry");
+  SerpMonitor.init(ensureGuid());
+  // Workaround for bug 1202125
+  // We need to delay our loading so that when we are upgraded,
+  // our new script doesn't get the shutdown message.
+  setTimeout(() => {
+    activateTelemetry();
+  }, 1000);
 }
 
 /**
