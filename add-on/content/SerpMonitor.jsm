@@ -19,6 +19,8 @@ const log = Log.repository.getLogger("extensions.searchvolmodel.monitor");
 log.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
 log.level = Services.prefs.getIntPref("extensions.searchvolmodel.logging", Log.Level.Warn);
 
+const PREF_DISTRIBUTION_ID = "distribution.id";
+
 /**
  * A map of search engine result domains with their expected prefixes.
  */
@@ -105,10 +107,7 @@ this.SerpMonitor = {
 
   get distributionId() {
     if (!this._distributionId) {
-      this._distributionId = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).distributionId;
-      if (!this._distributionId) {
-        this._distributionId = "";
-      }
+      this._distributionId = Services.prefs.getStringPref(PREF_DISTRIBUTION_ID, "");
     }
     return this._distributionId;
   },
