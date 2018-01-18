@@ -61,11 +61,13 @@ function onExit(...args) {
 
 let userjsSourceDir = Path.normalize(Path.join(__dirname, "user.js"));
 let addonSourceDir = Path.normalize(Path.join(__dirname, "..", "add-on"));
+let extraAddonSourceDir = Path.normalize(Path.join(__dirname, "..", "reporting"));
 let addonInstallRDF = Path.normalize(Path.join(addonSourceDir, "install.rdf"));
 let profile = Commander.profile || DEFAULT_PROFILE;
 let userjsTargetFile;
 let extensionsDir;
 let addonTargetFile;
+let reportingAddonTargetFile;
 let compatibilityFile;
 Fs.stat(addonSourceDir).then(sourceStat => {
   if (!sourceStat.isDirectory()) {
@@ -82,15 +84,19 @@ Fs.stat(addonSourceDir).then(sourceStat => {
     // profile directory IF it doesn't exist yet.
     extensionsDir = Path.join(profilePath, "extensions");
     addonTargetFile = Path.join(extensionsDir, "searchvolmodel@mozilla.com");
+    reportingAddonTargetFile = Path.join(extensionsDir, "searchvolmodelextra@mozilla.com")
     compatibilityFile = Path.join(profilePath, "compatibility.ini");
     userjsTargetFile = Path.join(profilePath, "user.js");
     return Mkdirp(extensionsDir);
   })
   .then(() => ensureRemoved(addonTargetFile))
+  .then(() => ensureRemoved(reportingAddonTargetFile))
   // This should fail at a certain point, because we don't want the add-on
   // directory to exist.
   .then(() => Fs.open(addonTargetFile, "w+"))
   .then(file => Fs.write(file, `${addonSourceDir}/`))
+  .then(() => Fs.open(reportingAddonTargetFile, "w+"))
+  .then(file => Fs.write(file, `${extraAddonSourceDir}/`))
   // Insert user.js with the prefs that we need.
   .then(() => {
     // eslint-disable-next-line no-sync
